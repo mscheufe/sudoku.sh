@@ -100,7 +100,7 @@ is_unique() {
 	return 0
 }
 
-get_next_empty() {
+get_index_next_empty() {
     local _i=
     for _i in "${!OVERALL_GRID[@]}"; do
         if (( OVERALL_GRID[_i] == 0 )); then
@@ -115,7 +115,7 @@ solve_puzzle() {
     local _i=0
     local _n=0
 	local _next=
-	_next=$(get_next_empty)
+	_next=$(get_index_next_empty)
 	(( _next == -1 )) && return 0
 	for _n in {1..9}; do
 		OVERALL_GRID[$_next]="$_n"
