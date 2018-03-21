@@ -67,7 +67,7 @@ type_of_check() {
             echo col
             ;;
         *subgrid*)
-            echo grid
+            echo subgrid
             ;;
     esac
 }
