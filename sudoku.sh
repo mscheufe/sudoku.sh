@@ -4,8 +4,8 @@
 DEBUG=false
 OVERALL_GRID=
 SIZE=9
-GRID_SIZE=3
-GRID_STEPS=(0 9 18)
+SUBGRID_SIZE=3
+SUBGRID_STEPS=(0 9 18)
 
 print() { [[ $DEBUG = true ]] && echo -e "$*"; }
 
@@ -19,28 +19,42 @@ read_grid_from_file() {
 print_grid() {
     for i in "${!OVERALL_GRID[@]}"; do
         if (( (i+1) % SIZE )); then
-            printf "%2d " "${OVERALL_GRID[i]}"
+            printf "%-2d" "${OVERALL_GRID[i]}"
         else
-            printf "%2d\\n" "${OVERALL_GRID[i]}"
+            printf "%-2d\\n" "${OVERALL_GRID[i]}"
         fi
     done
 }
 
+print_heading() {
+    local _heading="$*"
+    local _pos=$(((17 - ${#_heading}) / 2))
+    printf "%*s%s\\n" "$_pos" "" "$_heading"
+}
+
 get_row_indices() {
     local _index=$1
-    for (( i=(_index / SIZE) * SIZE; i < ((_index / SIZE) * SIZE) + SIZE; i++ )) { echo -en "$i "; }
+    for (( i=(_index / SIZE) * SIZE; i < ((_index / SIZE) * SIZE) + SIZE; i++ )) {
+        echo -en "$i "
+    }
 }
 
 get_column_indices() {
     local _index=$1
-    for (( i=(_index % SIZE); i <= _index % SIZE + (SIZE - 1) * SIZE; i+=SIZE )) { echo -en "$i "; }
+    for (( i=(_index % SIZE); i <= _index % SIZE + (SIZE - 1) * SIZE; i+=SIZE )) {
+        echo -en "$i ";
+    }
 }
 
-get_grid_indices() {
+get_subgrid_indices() {
     local _index=$1
-    local _start_pos=$(( ((_index - SIZE * ((_index / SIZE) % GRID_SIZE)) / GRID_SIZE) * GRID_SIZE ))
-    for i in "${GRID_STEPS[@]}"; do
-        for ((j=_start_pos; j < _start_pos + GRID_SIZE; j++)) { echo -en "$(( j + i )) "; }
+    local _current_row=$((_index / SIZE))
+    local _index_on_firstrow_subgrid=$((_index - ((_current_row % SUBGRID_SIZE) * SIZE)))
+    local _index_startpos_subgrid=$(((_index_on_firstrow_subgrid / SUBGRID_SIZE) * SUBGRID_SIZE))
+    for i in "${SUBGRID_STEPS[@]}"; do
+        for ((j=_index_startpos_subgrid; j < _index_startpos_subgrid + SUBGRID_SIZE; j++)) {
+            echo -en "$(( j + i )) "
+        }
     done
 }
 
@@ -52,7 +66,7 @@ type_of_check() {
         *col*)
             echo col
             ;;
-        *grid*)
+        *subgrid*)
             echo grid
             ;;
     esac
@@ -80,13 +94,13 @@ is_unique() {
     if ! run_check get_column_indices "$_index"; then
         return 1
     fi
-    if ! run_check get_grid_indices "$_index"; then
+    if ! run_check get_subgrid_indices "$_index"; then
         return 1
     fi
 	return 0
 }
 
-get_next() {
+get_next_empty() {
     local _i=
     for _i in "${!OVERALL_GRID[@]}"; do
         if (( OVERALL_GRID[_i] == 0 )); then
@@ -97,16 +111,16 @@ get_next() {
     echo -1
 }
 
-solve() {
+solve_puzzle() {
     local _i=0
     local _n=0
 	local _next=
-	_next=$(get_next)
+	_next=$(get_next_empty)
 	(( _next == -1 )) && return 0
 	for _n in {1..9}; do
 		OVERALL_GRID[$_next]="$_n"
 		if is_unique "$_next"; then
-			if solve; then
+			if solve_puzzle; then
 				return 0
 			fi
 		fi
@@ -115,20 +129,24 @@ solve() {
     return 1
 }
 
-verify() {
+verify_puzzle() {
     local _i=0
     for _i in "${!OVERALL_GRID[@]}"; do
 		if ! is_unique "$_i"; then
-            "grid is not unique at OVERALL_GRID[$_i]=${OVERALL_GRID[$_i]}"
+            print "grid is not unique at OVERALL_GRID[$_i]=${OVERALL_GRID[$_i]}"
             return 1
         fi
     done
     return 0
 }
 
+# --main --
 read_grid_from_file "$1"
+print_heading "INPUT GRID"
 print_grid
-solve
-echo -
+solve_puzzle
+print_heading "SOLVED GRID"
 print_grid
-verify
+if ! verify_puzzle; then
+    echo "something must be wrong"
+fi
