@@ -1,6 +1,6 @@
-#sudoku.sh
+# sudoku.sh
 
-##Description
+## Description
 
 A sudoku puzzle solver, using backtracking, written in bash (not very fast :smirk:)
 
