@@ -124,8 +124,8 @@ solve_puzzle() {
 				return 0
 			fi
 		fi
-        OVERALL_GRID[$_next]=0
 	done
+    OVERALL_GRID[$_next]=0
     return 1
 }
 
